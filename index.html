@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Medication-neutral acquired hypothalamic obesity clinical case-finding MVP." />
+  <title>aHO Case Finder</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #172033;
+      --muted: #5d687b;
+      --border: #dbe2ea;
+      --primary: #2457a6;
+      --primary-dark: #173f7d;
+      --low: #257a52;
+      --possible: #9a6700;
+      --high: #a33030;
+      --shadow: 0 12px 28px rgba(24, 39, 75, 0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    .container {
+      width: min(960px, calc(100% - 32px));
+      margin: 32px auto 64px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #173f7d, #2b67b8);
+      color: white;
+      border-radius: 22px;
+      padding: 30px;
+      box-shadow: var(--shadow);
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      line-height: 1.15;
+    }
+
+    header p {
+      max-width: 760px;
+      margin: 0;
+      opacity: 0.92;
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 12px;
+      background: rgba(255,255,255,.1);
+      font-size: 0.95rem;
+    }
+
+    .card {
+      margin-top: 20px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 1.35rem;
+    }
+
+    .helper {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .question {
+      margin: 0 0 22px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .question:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    fieldset {
+      border: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    legend {
+      width: 100%;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+      cursor: pointer;
+    }
+
+    .option:hover {
+      border-color: #aebbd0;
+    }
+
+    input[type="checkbox"],
+    input[type="radio"] {
+      margin-top: 4px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      flex: 0 0 auto;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 13px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: white;
+      color: var(--text);
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 190px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus,
+    button:focus {
+      outline: 3px solid rgba(36, 87, 166, .22);
+      outline-offset: 2px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .secondary {
+      background: #e9eef6;
+      color: var(--text);
+    }
+
+    .result {
+      display: none;
+    }
+
+    .result.visible {
+      display: block;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .status.low {
+      background: #e9f6ef;
+      color: var(--low);
+    }
+
+    .status.possible {
+      background: #fff4d6;
+      color: var(--possible);
+    }
+
+    .status.high {
+      background: #fdeaea;
+      color: var(--high);
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .metric {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-soft);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 1.15rem;
+    }
+
+    .logic-note {
+      padding: 14px;
+      border-left: 4px solid var(--primary);
+      background: #eef4ff;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    footer {
+      margin-top: 20px;
+      color: var(--muted);
+      text-align: center;
+      font-size: .85rem;
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        width: min(100% - 20px, 960px);
+        margin-top: 12px;
+      }
+
+      header,
+      .card {
+        padding: 19px;
+      }
+
+      .grid-2,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body { background: white; }
+      header, #screeningForm, .actions, footer { display: none !important; }
+      .container { width: 100%; margin: 0; }
+      .card { border: 0; box-shadow: none; padding: 0; }
+      .result { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Acquired Hypothalamic Obesity Case Finder</h1>
+      <p>
+        A medication-neutral previsit tool that identifies clinical features that may warrant
+        clinician review and creates a structured HPI draft.
+      </p>
+      <div class="notice">
+        This MVP is a case-finding and documentation aid. It does not diagnose acquired
+        hypothalamic obesity, estimate treatment response, or determine medication eligibility.
+      </div>
+    </header>
+
+    <form id="screeningForm" class="card" novalidate>
+      <h2>Patient questionnaire</h2>
+      <p class="helper">
+        Answer based on what happened after the brain condition, injury, surgery, or treatment.
+        No answers are transmitted or stored.
+      </p>
+
+      <section class="question">
+        <fieldset>
+          <legend>1. Have you ever had any of the following? Select all that apply.</legend>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="injury" value="craniopharyngioma"> Craniopharyngioma</label>
+            <label class="option"><input type="checkbox" name="injury" value="other sellar or suprasellar brain tumor"> Another tumor near the pituitary or hypothalamus</label>
+            <label class="option"><input type="checkbox" name="injury" value="hypothalamic-region brain surgery"> Brain surgery near the pituitary or hypothalamus</label>
+            <label class="option"><input type="checkbox" name="injury" value="cranial radiation"> Radiation treatment to the brain</label>
+            <label class="option"><input type="checkbox" name="injury" value="traumatic brain injury"> Moderate or severe head injury</label>
+            <label class="option"><input type="checkbox" name="injury" value="infectious, inflammatory, or infiltrative hypothalamic disease"> Brain infection, inflammation, or another disease affecting the hypothalamus</label>
+            <label class="option"><input type="checkbox" id="noInjury" name="injury" value="none"> None of the above</label>
+          </div>
+        </fieldset>
+      </section>
+
+      <div id="followUpQuestions">
+        <section class="question">
+          <fieldset>
+            <legend>2. When did the brain condition, injury, surgery, or treatment occur?</legend>
+            <div class="grid-2">
+              <select id="eventTiming" aria-label="Timing of brain condition">
+                <option value="">Select one</option>
+                <option>Within the last year</option>
+                <option>1 to 2 years ago</option>
+                <option>More than 2 years ago</option>
+                <option>I do not remember</option>
+              </select>
+              <input id="eventName" type="text" placeholder="Optional: condition or procedure name" />
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="question">
+          <fieldset>
+            <legend>3. Did your weight begin increasing quickly within about 12 months afterward?</legend>
+            <div class="options">
+              <label class="option"><input type="radio" name="rapidGain" value="yes"> Yes</label>
+              <label class="option"><input type="radio" name="rapidGain" value="no"> No</label>
+              <label class="option"><input type="radio" name="rapidGain" value="unsure"> I am not sure</label>
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="question">
+          <fieldset>
+            <legend>4. Did the weight gain continue or remain difficult to reverse?</legend>
+            <div class="options">
+              <label class="option"><input type="radio" name="persistentGain" value="yes"> Yes</label>
+              <label class="option"><input type="radio" name="persistentGain" value="no"> No</label>
+              <label class="option"><input type="radio" name="persistentGain" value="unsure"> I am not sure</label>
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="question">
+          <fieldset>
+            <legend>5. About how much weight did you gain afterward?</legend>
+            <div class="grid-2">
+              <select id="weightGain">
+                <option value="">Select one</option>
+                <option>Less than 10 lb</option>
+                <option>10 to 25 lb</option>
+                <option>26 to 50 lb</option>
+                <option>More than 50 lb</option>
+                <option>I am not sure</option>
+              </select>
+              <input id="weightGainExact" type="number" min="0" step="0.1" placeholder="Optional exact pounds gained" />
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="question">
+          <fieldset>
+            <legend>6. Since that event, have you noticed any of these hunger or eating changes?</legend>
+            <div class="options">
+              <label class="option"><input type="checkbox" name="hyperphagia" value="feeling hungry soon after eating"> I feel hungry soon after eating</label>
+              <label class="option"><input type="checkbox" name="hyperphagia" value="not feeling full after a normal meal"> I do not feel full after a normal meal</label>
+              <label class="option"><input type="checkbox" name="hyperphagia" value="frequent thoughts or preoccupation with food"> I think about food much more than before</label>
+              <label class="option"><input type="checkbox" name="hyperphagia" value="difficulty stopping eating once started"> I have difficulty stopping eating once I start</label>
+              <label class="option"><input type="checkbox" name="hyperphagia" value="food-seeking behavior noticed by the patient or family"> I or my family have noticed food-seeking behavior</label>
+              <label class="option"><input type="checkbox" name="hyperphagia" value="none"> None of these</label>
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="question">
+          <fieldset>
+            <legend>7. Since that event, have you noticed any of these other changes?</legend>
+            <div class="options">
+              <label class="option"><input type="checkbox" name="supportive" value="fatigue or low energy"> Fatigue or low energy</label>
+              <label class="option"><input type="checkbox" name="supportive" value="reduced initiative or motivation"> Less initiative or motivation</label>
+              <label class="option"><input type="checkbox" name="supportive" value="reduced physical activity"> Less physical activity</label>
+              <label class="option"><input type="checkbox" name="supportive" value="sleep or body-clock disturbance"> Sleep or body-clock changes</label>
+              <label class="option"><input type="checkbox" name="supportive" value="daytime sleepiness"> Excessive daytime sleepiness</label>
+              <label class="option"><input type="checkbox" name="supportive" value="difficulty regulating body temperature"> Trouble staying warm or cool</label>
+              <label class="option"><input type="checkbox" name="supportive" value="behavioral or personality change"> Behavioral or personality changes</label>
+              <label class="option"><input type="checkbox" name="supportive" value="none"> None of these</label>
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="question">
+          <fieldset>
+            <legend>8. Have you been told that you have any pituitary hormone problems?</legend>
+            <div class="options">
+              <label class="option"><input type="checkbox" name="pituitary" value="central thyroid hormone deficiency"> Thyroid hormone deficiency</label>
+              <label class="option"><input type="checkbox" name="pituitary" value="adrenal insufficiency"> Adrenal insufficiency</label>
+              <label class="option"><input type="checkbox" name="pituitary" value="growth hormone deficiency"> Growth hormone deficiency</label>
+              <label class="option"><input type="checkbox" name="pituitary" value="arginine vasopressin deficiency or diabetes insipidus"> Diabetes insipidus or vasopressin deficiency</label>
+              <label class="option"><input type="checkbox" name="pituitary" value="low testosterone, estrogen, or another gonadal hormone deficiency"> Low testosterone, estrogen, or another reproductive hormone problem</label>
+              <label class="option"><input type="checkbox" name="pituitary" value="none"> None</label>
+              <label class="option"><input type="checkbox" name="pituitary" value="unsure"> I am not sure</label>
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="question">
+          <fieldset>
+            <legend>9. Has an MRI or clinician identified injury or disease involving the hypothalamus?</legend>
+            <div class="options">
+              <label class="option"><input type="radio" name="lesion" value="yes"> Yes</label>
+              <label class="option"><input type="radio" name="lesion" value="no"> No</label>
+              <label class="option"><input type="radio" name="lesion" value="unsure"> I am not sure</label>
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="question">
+          <fieldset>
+            <legend>10. Optional details for your healthcare team</legend>
+            <textarea id="details" placeholder="Examples: tumor name, surgery date, radiation treatment, MRI findings, or when weight changes began"></textarea>
+          </fieldset>
+        </section>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="button" id="generateButton">Generate clinical summary</button>
+        <button class="secondary" type="reset" id="resetButton">Clear form</button>
+      </div>
+    </form>
+
+    <section id="result" class="card result" aria-live="polite">
+      <h2>Clinical case-finding output</h2>
+      <div id="statusBadge" class="status possible">Clinician review recommended</div>
+
+      <div class="result-grid">
+        <div class="metric">
+          <span>Core features present</span>
+          <strong id="coreCount">0 of 3</strong>
+        </div>
+        <div class="metric">
+          <span>Hunger-related features</span>
+          <strong id="hyperphagiaCount">0</strong>
+        </div>
+        <div class="metric">
+          <span>Supportive features</span>
+          <strong id="supportiveCount">0</strong>
+        </div>
+      </div>
+
+      <div id="interpretation" class="logic-note"></div>
+
+      <label for="hpiOutput"><strong>Draft HPI</strong></label>
+      <textarea id="hpiOutput" readonly></textarea>
+
+      <div class="actions">
+        <button type="button" class="primary" id="copyButton">Copy HPI</button>
+        <button type="button" class="secondary" id="printButton">Print result</button>
+      </div>
+
+      <p class="small">
+        Important: This output is not a diagnosis, validated probability, or medication recommendation.
+        A clinician should verify the history, weight trajectory, BMI or BMI-SDS, imaging, endocrine status,
+        alternative causes of weight gain, and relevant comorbidities.
+      </p>
+    </section>
+
+    <footer>
+      MVP for clinical discussion and faculty review. No patient information is saved or transmitted.
+    </footer>
+  </main>
+
+  <script>
+    const form = document.getElementById("screeningForm");
+    const result = document.getElementById("result");
+    const followUp = document.getElementById("followUpQuestions");
+    const noInjury = document.getElementById("noInjury");
+    const injuryBoxes = [...document.querySelectorAll('input[name="injury"]')];
+
+    const checkedValues = (name) =>
+      [...document.querySelectorAll(`input[name="${name}"]:checked`)]
+        .map(input => input.value)
+        .filter(value => value !== "none" && value !== "unsure");
+
+    const radioValue = (name) =>
+      document.querySelector(`input[name="${name}"]:checked`)?.value || "";
+
+    const listPhrase = (items) => {
+      if (!items.length) return "";
+      if (items.length === 1) return items[0];
+      if (items.length === 2) return `${items[0]} and ${items[1]}`;
+      return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
+    };
+
+    injuryBoxes.forEach(box => {
+      box.addEventListener("change", () => {
+        if (box === noInjury && box.checked) {
+          injuryBoxes.forEach(other => {
+            if (other !== noInjury) other.checked = false;
+          });
+          followUp.classList.add("hidden");
+        } else if (box !== noInjury && box.checked) {
+          noInjury.checked = false;
+          followUp.classList.remove("hidden");
+        }
+
+        if (!noInjury.checked) followUp.classList.remove("hidden");
+      });
+    });
+
+    ["hyperphagia", "supportive", "pituitary"].forEach(group => {
+      const boxes = [...document.querySelectorAll(`input[name="${group}"]`)];
+      boxes.forEach(box => {
+        box.addEventListener("change", () => {
+          if ((box.value === "none" || box.value === "unsure") && box.checked) {
+            boxes.forEach(other => {
+              if (other !== box) other.checked = false;
+            });
+          } else if (box.checked) {
+            boxes
+              .filter(other => other.value === "none" || other.value === "unsure")
+              .forEach(other => other.checked = false);
+          }
+        });
+      });
+    });
+
+    document.getElementById("generateButton").addEventListener("click", () => {
+      const injuries = checkedValues("injury");
+      const hasNoInjury = noInjury.checked || injuries.length === 0;
+      const rapidGain = radioValue("rapidGain");
+      const persistentGain = radioValue("persistentGain");
+      const lesion = radioValue("lesion");
+      const hyperphagia = checkedValues("hyperphagia");
+      const supportive = checkedValues("supportive");
+      const pituitary = checkedValues("pituitary");
+      const timing = document.getElementById("eventTiming").value;
+      const eventName = document.getElementById("eventName").value.trim();
+      const weightGain = document.getElementById("weightGain").value;
+      const exactGain = document.getElementById("weightGainExact").value;
+      const details = document.getElementById("details").value.trim();
+
+      const injuryCore = !hasNoInjury;
+      const temporalCore = rapidGain === "yes";
+      const sustainedCore = persistentGain === "yes";
+      const coreCount = [injuryCore, temporalCore, sustainedCore].filter(Boolean).length;
+
+      let category = "low";
+      let label = "Features not currently suggestive";
+      let interpretation =
+        "The submitted history does not contain the core pattern used for acquired hypothalamic obesity case-finding. Reassess if a documented hypothalamic injury or a clear post-injury weight trajectory becomes available.";
+
+      if (injuryCore && coreCount >= 2) {
+        category = "possible";
+        label = "Possible aHO pattern";
+        interpretation =
+          "The history contains a plausible hypothalamic injury plus at least one key weight-trajectory feature. Clinician review is recommended, including serial BMI or BMI-SDS, imaging or operative history, and assessment for alternative causes.";
+      }
+
+      if (injuryCore && temporalCore && sustainedCore && (lesion === "yes" || hyperphagia.length > 0)) {
+        category = "high";
+        label = "High clinical suspicion";
+        interpretation =
+          "The history contains all three core case-finding elements, with either documented hypothalamic involvement or hunger-related symptoms. This is not diagnostic, but it warrants comprehensive clinician evaluation.";
+      }
+
+      if (hasNoInjury) {
+        category = "low";
+        label = "No acquired hypothalamic injury reported";
+        interpretation =
+          "An acquired hypothalamic obesity pattern is less likely without a documented or plausible acquired hypothalamic injury. Consider other causes of weight gain and, when appropriate, genetic or syndromic obesity evaluation.";
+      }
+
+      document.getElementById("coreCount").textContent = `${coreCount} of 3`;
+      document.getElementById("hyperphagiaCount").textContent = hyperphagia.length;
+      document.getElementById("supportiveCount").textContent = supportive.length + pituitary.length;
+      document.getElementById("interpretation").textContent = interpretation;
+
+      const badge = document.getElementById("statusBadge");
+      badge.className = `status ${category}`;
+      badge.textContent = label;
+
+      const sentences = [];
+
+      if (hasNoInjury) {
+        sentences.push("Patient does not report a known acquired brain condition, injury, surgery, radiation exposure, or other hypothalamic-region disease on this screening questionnaire.");
+      } else {
+        const conditionText = eventName || listPhrase(injuries);
+        let firstSentence = `Patient reports a history of ${conditionText}`;
+        if (timing) firstSentence += ` occurring ${timing.toLowerCase()}`;
+        firstSentence += ".";
+        sentences.push(firstSentence);
+
+        if (rapidGain === "yes") {
+          sentences.push("Weight gain reportedly began rapidly within approximately 12 months of the neurologic condition or treatment.");
+        } else if (rapidGain === "no") {
+          sentences.push("Patient does not report rapid weight gain beginning within approximately 12 months of the neurologic condition or treatment.");
+        } else if (rapidGain === "unsure") {
+          sentences.push("The timing of weight gain relative to the neurologic condition or treatment is uncertain.");
+        }
+
+        if (persistentGain === "yes") {
+          sentences.push("The weight increase reportedly persisted or remained difficult to reverse.");
+        } else if (persistentGain === "no") {
+          sentences.push("The patient does not report persistent weight gain.");
+        } else if (persistentGain === "unsure") {
+          sentences.push("Persistence of the weight increase is uncertain.");
+        }
+
+        if (exactGain) {
+          sentences.push(`Patient estimates gaining approximately ${exactGain} lb afterward.`);
+        } else if (weightGain) {
+          sentences.push(`Reported weight gain was ${weightGain.toLowerCase()}.`);
+        }
+
+        if (hyperphagia.length) {
+          sentences.push(`Hunger-related symptoms include ${listPhrase(hyperphagia)}.`);
+        } else {
+          sentences.push("No hunger-related symptoms were selected.");
+        }
+
+        const otherFeatures = [...supportive, ...pituitary];
+        if (otherFeatures.length) {
+          sentences.push(`Additional supportive history includes ${listPhrase(otherFeatures)}.`);
+        }
+
+        if (lesion === "yes") {
+          sentences.push("Patient reports prior MRI or clinician documentation of hypothalamic involvement.");
+        } else if (lesion === "no") {
+          sentences.push("Patient does not report known imaging or clinician documentation of hypothalamic involvement.");
+        } else if (lesion === "unsure") {
+          sentences.push("The patient is unsure whether imaging showed hypothalamic involvement.");
+        }
+
+        if (details) {
+          sentences.push(`Additional patient-reported details: ${details}`);
+        }
+      }
+
+      sentences.push("This previsit summary requires clinician verification and should not be used alone to establish diagnosis or treatment eligibility.");
+
+      document.getElementById("hpiOutput").value = sentences.join(" ");
+      result.classList.add("visible");
+      result.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    document.getElementById("copyButton").addEventListener("click", async () => {
+      const output = document.getElementById("hpiOutput");
+      const button = document.getElementById("copyButton");
+
+      try {
+        await navigator.clipboard.writeText(output.value);
+      } catch {
+        output.select();
+        document.execCommand("copy");
+      }
+
+      const original = button.textContent;
+      button.textContent = "Copied";
+      setTimeout(() => button.textContent = original, 1400);
+    });
+
+    document.getElementById("printButton").addEventListener("click", () => window.print());
+
+    document.getElementById("resetButton").addEventListener("click", () => {
+      setTimeout(() => {
+        result.classList.remove("visible");
+        followUp.classList.remove("hidden");
+      }, 0);
+    });
+  </script>
+</body>
+</html>
